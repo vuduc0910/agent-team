@@ -14,11 +14,13 @@ Full graph and step table: [docs/flow.md](docs/flow.md).
 
 ## Install (Claude Code)
 
-Register the marketplace once per machine:
+Register the marketplace once per machine. The source is the GitHub repo:
 
 ```bash
-claude plugin marketplace add /Users/richard/Desktop/person/agent-team
+claude plugin marketplace add vuduc0910/agent-team
 ```
+
+Working on the plugin source itself: register the local checkout instead, with `claude plugin marketplace add /path/to/agent-team`.
 
 Install into a project you want it in. Run inside that project:
 
@@ -76,12 +78,14 @@ Every port keeps the same SQLite table `runs(id, ts, session_id, agent, descript
 
 ## Development
 
-After editing anything in this folder:
+After editing anything in this folder: bump `version` in `.claude-plugin/plugin.json`, commit, push, then on each machine:
 
 ```bash
-claude plugin validate . --strict
+claude plugin marketplace update agent-team
 claude plugin update agent-team@agent-team --scope <scope you installed with>
 ```
+
+`claude plugin validate . --strict` checks the manifests before you commit.
 
 The installed copy lives in `~/.claude/plugins/cache/agent-team/agent-team/<version>/` and is keyed by version. `update` only recopies when `version` in `.claude-plugin/plugin.json` changed, so bump it first. Restart the session afterwards.
 
