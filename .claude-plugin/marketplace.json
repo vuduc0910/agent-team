@@ -1,0 +1,12 @@
+{
+  "name": "agent-team",
+  "description": "Local marketplace for the Agent Team plugin.",
+  "owner": { "name": "richard" },
+  "plugins": [
+    {
+      "name": "agent-team",
+      "description": "Leader-Member pipeline: research, parallel coders, Playwright tester, Jev rank and verify, SQLite log.",
+      "source": "./"
+    }
+  ]
+}

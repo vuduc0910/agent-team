@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "cat", "args": ["${CLAUDE_PLUGIN_ROOT}/rules/LEADER.md"], "timeout": 5 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/log_agent.py"], "timeout": 15 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/log_agent.py"], "timeout": 15 }
+        ]
+      }
+    ]
+  }
+}
