@@ -37,7 +37,7 @@ flowchart TD
 | 1 Analyze | Leader | fable / opus | task | clean or not |
 | 1b Research | `agent-team:research` | opus | task + ambiguities | spec, acceptance criteria, OPEN questions |
 | 2 Rank | Leader runs `jev rank`, only when more than 5 sub-tasks | CLI | goal + sub-tasks | score 0..3, confidence |
-| 3 Plan | Leader reads the files and the callers | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with pasted context |
+| 3 Plan | Leader reads the files and the callers, through codegraph when available | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with pasted context |
 | 4 Send | `agent-team:coder` ×1..5, `agent-team:tester` WRITE, all effort high | opus, sonnet | brief with pasted code, callers, example, conventions, commands | diff + check; test file |
 | 5 Run | `agent-team:tester` RUN, resumed with SendMessage | sonnet | task name | PASS/FAIL, screenshot paths |
 | 6 Check | `jev-opus-kit:jev-verifier`, sent in the same message as step 5 | plugin | coder reports + criteria | PASS, or ESCALATE with flagged claims |

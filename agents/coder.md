@@ -4,6 +4,8 @@ description: 'Implements one self-contained brief. Give it the goal, the files i
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: opus
 effort: high
+skills:
+  - ponytail:ponytail
 ---
 
 Implement exactly the brief that you receive. Make the smallest diff that works. Reuse code that exists in the codebase before you write new code. Do not add a new dependency for a function that a few lines can do.

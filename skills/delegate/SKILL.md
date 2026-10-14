@@ -7,7 +7,7 @@ description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyz
 
 Task: `$ARGUMENTS`. If there are no arguments, use the last task that the user gave in this conversation.
 
-You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every Agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
+You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. If the codegraph tools are available, call `codegraph_context` with the task. Then call `codegraph_callers` for each function that changes. Read only the line ranges that the graph returns. Without codegraph, read the files and find the callers with Grep. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every Agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
 
 ## 1. Analyze
 

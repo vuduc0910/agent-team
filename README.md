@@ -11,6 +11,8 @@ Full graph and step table: [docs/flow.md](docs/flow.md).
 - The `jev-opus-kit` plugin installed. It provides the `jev` CLI and the `jev-opus-kit:jev-verifier` agent.
 - `python3` for the log hook.
 - `node` and npm in the target project, so the tester can install Playwright.
+- Optional: the `codegraph` MCP server (`codegraph install`, then `codegraph init . && codegraph index .` in the project). The Leader and research read line ranges from the graph instead of whole files.
+- Optional: the `ponytail` plugin. The coder preloads its skill. Without the plugin the coder runs the same, with a warning in the debug log.
 
 ## Install (Claude Code)
 
@@ -46,8 +48,8 @@ Or just give a task. The rules in `rules/LEADER.md` are injected into every sess
 
 - `rules/LEADER.md`: the Leader's rules, injected by the SessionStart hook.
 - `skills/delegate/SKILL.md`: the 7-step pipeline.
-- `agents/research.md`: clarifies an unclean task, read-only, opus.
-- `agents/coder.md`: implements a brief, opus, up to 5 in parallel on disjoint files.
+- `agents/research.md`: clarifies an unclean task, read-only, opus, has the codegraph tools.
+- `agents/coder.md`: implements a brief, opus, up to 5 in parallel on disjoint files, preloads the `ponytail:ponytail` skill.
 - `agents/tester.md`: Playwright, modes WRITE and RUN, sonnet.
 - `hooks/hooks.json`: SessionStart, PreToolUse and PostToolUse on `Agent`, Stop.
 - `scripts/log_agent.py`: SQLite writer. `python3 scripts/log_agent.py --selftest` to check it.
@@ -73,6 +75,14 @@ Multi-agent work is slower than one agent on a small task. Every member starts w
 - The tester is resumed for mode RUN, and a coder is resumed for a fix. A resumed member keeps its context and reads nothing twice.
 - The verifier runs in the same message as the test run, not after it.
 - The Leader holds the context. It reads the code and the callers itself, then pastes the code, the callers, one example to copy, the conventions and the commands into each brief. A member starts with an empty context and searches nothing.
+
+- With codegraph in the project, the Leader calls `codegraph_context` and `codegraph_callers` and reads only the ranges the graph returns. Set it up once per project:
+
+```bash
+codegraph init . && codegraph index .
+```
+
+- The coder preloads the `ponytail` skill: smallest diff, reuse before new code, no abstraction without a second use. It costs about one to two thousand tokens per coder and returns them as shorter code and shorter reports.
 
 Measure before you tune. The `durations` view gives seconds per member call:
 

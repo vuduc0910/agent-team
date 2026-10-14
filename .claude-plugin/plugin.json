@@ -1,7 +1,7 @@
 {
   "name": "agent-team",
   "displayName": "Agent Team",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Leader-Member working style for Claude Code: research, up to 5 parallel coders, Playwright tester, jev rank prioritisation, jev-verifier claim check, SQLite log of every agent call and leader summary.",
   "author": { "name": "richard" },
   "keywords": ["leader", "member", "orchestration", "playwright", "jev", "sqlite"]

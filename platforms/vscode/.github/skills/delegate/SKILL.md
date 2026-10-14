@@ -7,7 +7,7 @@ description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyz
 
 Task: the text that follows `/delegate`. If there is no text, use the last task that the user gave in this conversation.
 
-You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every subagent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
+You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. If a code graph tool is available, use it to find the files, the callers, and the line ranges. Read only those ranges. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every subagent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
 
 ## 1. Analyze
 
