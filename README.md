@@ -49,7 +49,7 @@ Or just give a task. The rules in `rules/LEADER.md` are injected into every sess
 - `agents/research.md`: clarifies an unclean task, read-only, opus.
 - `agents/coder.md`: implements a brief, opus, up to 5 in parallel on disjoint files.
 - `agents/tester.md`: Playwright, modes WRITE and RUN, sonnet.
-- `hooks/hooks.json`: SessionStart, PostToolUse on `Agent`, Stop.
+- `hooks/hooks.json`: SessionStart, PreToolUse and PostToolUse on `Agent`, Stop.
 - `scripts/log_agent.py`: SQLite writer. `python3 scripts/log_agent.py --selftest` to check it.
 - `docs/flow.md`, `docs/flow.png`: the Mermaid graph, its PNG render, and the step table.
 - `platforms/`: ports for other tools, each with its own README.
@@ -63,6 +63,24 @@ sqlite3 .team/agent-log.sqlite "select id, ts, agent, substr(response,1,80) from
 ```
 
 Rows with `agent = leader` are the Leader's final message of each turn. Every other row is a brief sent to a member and the report it returned.
+
+## Speed
+
+Multi-agent work is slower than one agent on a small task: every member starts with an empty context, and every hand-off is one more model round. The pipeline keeps the cost down in five ways:
+
+- `effort` per role: research `high`, coder `medium`, tester `medium`. Raise coder to `high` for hard changes.
+- `jev rank` runs only when there are more than 5 sub-tasks. Fewer sub-tasks all go in the first round.
+- The tester is resumed for mode RUN, and a coder is resumed for a fix. A resumed member keeps its context and reads nothing twice.
+- The verifier runs in the same message as the test run, not after it.
+- A coder brief carries `path:start-end` line ranges and one example to copy, so the coder does not search the repo.
+
+Measure before you tune. The `durations` view gives seconds per member call:
+
+```bash
+sqlite3 .team/agent-log.sqlite "select agent, description, seconds from durations order by seconds desc"
+```
+
+Raise the delegation threshold in `rules/LEADER.md` if small tasks still go through the pipeline.
 
 ## Other platforms
 

@@ -12,11 +12,11 @@ Run `/agent-team:delegate` before any other action when one of these is true:
 The pipeline has 7 steps:
 
 1. The Leader analyzes the task. If the task is not clean, the Leader sends the task to `agent-team:research`. If only the user can answer a question, the Leader asks the user before any coder starts.
-2. The Leader splits the spec into sub-tasks. The Leader scores each sub-task against the goal with `jev rank`. A sub-task with a score of 2 or more goes in this round, in score order. A sub-task with a score from 1 to less than 2 waits for a later round. The Leader drops a sub-task with a score of less than 1 and tells the user in one line.
+2. The Leader splits the spec into sub-tasks. If there are 5 or fewer sub-tasks, all of them go in this round, in the order written. If there are more than 5, the Leader scores each sub-task against the goal with `jev rank`. A sub-task with a score of 2 or more goes in this round, in score order. A sub-task with a score from 1 to less than 2 waits for a later round. The Leader drops a sub-task with a score of less than 1 and tells the user in one line.
 3. The Leader writes the plan as a table with a Rank column. Each coder owns a set of files. No two coders own the same file.
-4. The Leader sends, in one message, up to 5 `agent-team:coder` briefs and one `agent-team:tester` brief in mode WRITE. The tester installs Playwright and writes one test for each acceptance criterion.
-5. When every coder reports, the Leader sends `agent-team:tester` a brief in mode RUN. The tester saves screenshots in `.team/validation/<task>/`. If a test fails, the Leader sends the failure output to the coder that owns the file. This loop runs at most 2 times.
-6. The Leader sends every report to `jev-opus-kit:jev-verifier`. The verifier splits the reports into claims and scores each claim with `jev check`. The result must be PASS. If the result is ESCALATE, the Leader repeats the flagged step. This loop runs at most 2 times.
+4. The Leader sends, in one message, up to 5 `agent-team:coder` briefs and one `agent-team:tester` brief in mode WRITE. Each coder brief has the line ranges to read and one example to copy. The tester installs Playwright and writes one test for each acceptance criterion.
+5. When every coder reports, the Leader resumes the tester in mode RUN and sends every report to `jev-opus-kit:jev-verifier`, in the same message. The tester saves screenshots in `.team/validation/<task>/`. If a test fails, the Leader resumes the coder that owns the file with the failure output. This loop runs at most 2 times.
+6. The verifier splits the reports into claims and scores each claim with `jev check`. The result must be PASS. If the result is ESCALATE, the Leader resumes the member that made the flagged claim. This loop runs at most 2 times.
 7. Hooks write every Agent call and the final message of the Leader to `.team/agent-log.sqlite`. The Leader does nothing for this step.
 
 ## Who gets what
@@ -26,7 +26,7 @@ The pipeline has 7 steps:
 | Make a task that is not clean into a spec. Map the code. | `agent-team:research` | opus |
 | Write or change code from a brief | `agent-team:coder` | opus, up to 5 in parallel |
 | Install Playwright. Write and run tests. | `agent-team:tester` | sonnet |
-| Rank sub-tasks | The Leader runs `jev rank` | CLI |
+| Rank sub-tasks when there are more than 5 | The Leader runs `jev rank` | CLI |
 | Score claims with Jev | `jev-opus-kit:jev-verifier` | plugin |
 
 ## When NOT to delegate
@@ -58,3 +58,4 @@ Every member writes its report in this shape. The Leader does not accept a repor
 - A coder writes no tests. The tester changes no application code.
 - Shared state goes in files in the repo, not in the conversation.
 - The Leader never skips the Jev step. Without PASS, the task is not done.
+- The Leader resumes a member with SendMessage for a second round. A new member must read everything again.
