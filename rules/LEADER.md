@@ -13,8 +13,8 @@ The pipeline has 7 steps:
 
 1. The Leader analyzes the task. If the task is not clean, the Leader sends the task to `agent-team:research`. If only the user can answer a question, the Leader asks the user before any coder starts.
 2. The Leader splits the spec into sub-tasks. If there are 5 or fewer sub-tasks, all of them go in this round, in the order written. If there are more than 5, the Leader scores each sub-task against the goal with `jev rank`. A sub-task with a score of 2 or more goes in this round, in score order. A sub-task with a score from 1 to less than 2 waits for a later round. The Leader drops a sub-task with a score of less than 1 and tells the user in one line.
-3. The Leader writes the plan as a table with a Rank column. Each coder owns a set of files. No two coders own the same file.
-4. The Leader sends, in one message, up to 5 `agent-team:coder` briefs and one `agent-team:tester` brief in mode WRITE. Each coder brief has the line ranges to read and one example to copy. The tester installs Playwright and writes one test for each acceptance criterion.
+3. The Leader reads the files that the task changes and every caller of each function that changes. The Leader writes the plan as a table with a Rank column. Each coder owns a set of files. No two coders own the same file.
+4. The Leader sends, in one message, up to 5 `agent-team:coder` briefs and one `agent-team:tester` brief in mode WRITE. Each brief carries the context pasted in: the code to change, the callers, one example to copy, and the conventions. The tester installs Playwright and writes one test for each acceptance criterion.
 5. When every coder reports, the Leader resumes the tester in mode RUN and sends every report to `jev-opus-kit:jev-verifier`, in the same message. The tester saves screenshots in `.team/validation/<task>/`. If a test fails, the Leader resumes the coder that owns the file with the failure output. This loop runs at most 2 times.
 6. The verifier splits the reports into claims and scores each claim with `jev check`. The result must be PASS. If the result is ESCALATE, the Leader resumes the member that made the flagged claim. This loop runs at most 2 times.
 7. Hooks write every Agent call and the final message of the Leader to `.team/agent-log.sqlite`. The Leader does nothing for this step.
@@ -23,9 +23,9 @@ The pipeline has 7 steps:
 
 | Work | Agent | Model |
 |---|---|---|
-| Make a task that is not clean into a spec. Map the code. | `agent-team:research` | opus |
-| Write or change code from a brief | `agent-team:coder` | opus, up to 5 in parallel |
-| Install Playwright. Write and run tests. | `agent-team:tester` | sonnet |
+| Make a task that is not clean into a spec. Map the code. | `agent-team:research` | opus, effort high |
+| Write or change code from a brief | `agent-team:coder` | opus, effort high, up to 5 in parallel |
+| Install Playwright. Write and run tests. | `agent-team:tester` | sonnet, effort high |
 | Rank sub-tasks when there are more than 5 | The Leader runs `jev rank` | CLI |
 | Score claims with Jev | `jev-opus-kit:jev-verifier` | plugin |
 
@@ -36,12 +36,13 @@ The pipeline has 7 steps:
 
 ## A brief must be self-contained
 
-Members do not see the context of the Leader. Every brief has these 4 parts:
+The Leader holds the context. A member starts with an empty context and gets everything from the brief. Every brief has these 5 parts:
 
-1. The goal, in one sentence.
-2. The exact paths: files, folder, test command, dev server command.
+1. The goal, with the acceptance criteria that the member owns.
+2. The context, pasted in: the code to change with `path:start-end`, the callers of each function that changes, one example to copy, and the conventions.
 3. The constraints: what the member must not change, and what must stay true.
-4. The report format.
+4. The commands: check, test, dev server.
+5. The report format.
 
 ## Reports from members
 
@@ -59,3 +60,4 @@ Every member writes its report in this shape. The Leader does not accept a repor
 - Shared state goes in files in the repo, not in the conversation.
 - The Leader never skips the Jev step. Without PASS, the task is not done.
 - The Leader resumes a member with SendMessage for a second round. A new member must read everything again.
+- The Leader pastes the context into the brief. A member does not search the repo for what the Leader already read.

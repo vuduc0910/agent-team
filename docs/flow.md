@@ -9,7 +9,7 @@ flowchart TD
     RS -- "OPEN questions" --> Q["Ask user"] --> R
     RS -- "spec" --> R
     A -- "clean" --> R["2 · Leader: jev rank sub-tasks<br/>only when more than 5"]
-    R -- "score ≥ 2" --> P["3 · Leader plans<br/>each coder owns disjoint files<br/>.team/ in .gitignore"]
+    R -- "score ≥ 2" --> P["3 · Leader reads the code, plans<br/>context pasted into each brief<br/>each coder owns disjoint files"]
     R -- "1 ≤ score &lt; 2" --> D1["Defer, tell user"]
     R -- "score &lt; 1" --> D2["Drop, tell user"]
     P --> C["4 · agent-team:coder ×1..5 · opus<br/>in parallel"]
@@ -37,8 +37,8 @@ flowchart TD
 | 1 Analyze | Leader | fable / opus | task | clean or not |
 | 1b Research | `agent-team:research` | opus | task + ambiguities | spec, acceptance criteria, OPEN questions |
 | 2 Rank | Leader runs `jev rank`, only when more than 5 sub-tasks | CLI | goal + sub-tasks | score 0..3, confidence |
-| 3 Plan | Leader | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief |
-| 4 Send | `agent-team:coder` ×1..5 (effort medium), `agent-team:tester` WRITE (effort medium) | opus, sonnet | brief with `path:start-end` and an example to copy | diff + check; test file |
+| 3 Plan | Leader reads the files and the callers | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with pasted context |
+| 4 Send | `agent-team:coder` ×1..5, `agent-team:tester` WRITE, all effort high | opus, sonnet | brief with pasted code, callers, example, conventions, commands | diff + check; test file |
 | 5 Run | `agent-team:tester` RUN, resumed with SendMessage | sonnet | task name | PASS/FAIL, screenshot paths |
 | 6 Check | `jev-opus-kit:jev-verifier`, sent in the same message as step 5 | plugin | coder reports + criteria | PASS, or ESCALATE with flagged claims |
 | 7 Report | Leader | | | files, tests, screenshot folder, Jev verdict |

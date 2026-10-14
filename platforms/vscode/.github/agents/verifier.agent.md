@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: 'Checks claims against the code and escalates the unsupported claims. Give it the coder reports, the tester RUN report, and the acceptance criteria. It splits the reports into atomic claims. It checks each claim against the source code with jev check. It reports PASS or ESCALATE with the flagged claims. It does not change the code.'
+description: 'Checks claims against the code and escalates the unsupported claims. Give it the coder reports and the acceptance criteria. It splits the reports into atomic claims. It checks each claim against the source code with jev check. It reports PASS or ESCALATE with the flagged claims. It does not change the code.'
 tools: ['read', 'search', 'execute/runInTerminal']
 user-invocable: false
 ---

@@ -13,6 +13,17 @@ export const AgentLog: Plugin = async ({ client, $, directory }) => {
   }
 
   return {
+    "tool.execute.before": async (input, output) => {
+      if (input.tool !== "task") return
+      await write({
+        session_id: input.sessionID,
+        agent: output.args?.subagent_type,
+        description: "start",
+        prompt: output.args?.prompt,
+        response: null,
+        tool_use_id: input.callID,
+      })
+    },
     "tool.execute.after": async (input, output) => {
       if (input.tool !== "task") return
       await write({
@@ -21,6 +32,7 @@ export const AgentLog: Plugin = async ({ client, $, directory }) => {
         description: input.args?.description,
         prompt: input.args?.prompt,
         response: output.output,
+        tool_use_id: input.callID,
       })
     },
     event: async ({ event }) => {

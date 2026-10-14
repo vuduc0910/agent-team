@@ -2,6 +2,7 @@
 description: 'Makes a task that is not clean into a spec. Give it the task, the unclear points, and the repo root. It reads the code and the web. It decides each unclear point that the evidence can decide. It returns a clean spec and the questions that only the user can answer. It does not change files.'
 mode: subagent
 model: anthropic/claude-opus-5-5
+variant: high
 permission:
   edit: deny
   question: deny

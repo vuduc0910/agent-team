@@ -1,5 +1,8 @@
 {
   "hooks": {
+    "PreToolUse": [
+      { "type": "command", "command": "python3 .github/hooks/log_agent.py", "timeout": 15 }
+    ],
     "PostToolUse": [
       { "type": "command", "command": "python3 .github/hooks/log_agent.py", "timeout": 15 }
     ],

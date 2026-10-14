@@ -1,13 +1,13 @@
 ---
 name: delegate
-description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyze the task. Send a task that is not clean to research. Rank the sub-tasks with jev rank. Write a plan. Send up to 5 coders in parallel with a Playwright tester. Run the tests with screenshots. Check every claim with the verifier. Use this skill at the start of a task that changes 3 or more files, or that has a build step and a test step. Do not use this skill for a task that changes fewer than 3 files and takes less than 5 minutes. Invoke as $delegate <task>.
+description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyze the task. Send a task that is not clean to research. Rank the sub-tasks with jev rank when there are more than 5. Write a plan. Send up to 5 coders in parallel with a Playwright tester. Run the tests with screenshots and check every claim with the verifier in the same message. Report. Use this skill at the start of a task that changes 3 or more files, or that has a build step and a test step. Do not use this skill for a task that changes fewer than 3 files and takes less than 5 minutes. Invoke as $delegate <task>.
 ---
 
 # Delegate
 
 Task: the task text in the message that invoked this skill. If that message has no task text, use the last task that the user gave in this conversation.
 
-You are the Leader. Do not read the codebase in bulk before the plan exists. Do not write code yourself before the plan exists. Hooks write every agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
+You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
 
 The Members are the custom agents `research`, `coder`, `tester`, and `verifier`. Send each brief to a Member by name.
 
@@ -25,7 +25,9 @@ If the task is not clean, send a brief to `research`. The brief has the task, th
 
 ## 2. Rank
 
-Split the spec into sub-tasks, one line each. Score the sub-tasks against the goal in the shell:
+Split the spec into sub-tasks, one line each. If there are 5 or fewer sub-tasks, all of them go in this round, in the order written. Continue at step 3.
+
+If there are more than 5 sub-tasks, score them against the goal in the shell:
 
 ```bash
 jev rank "<goal in one sentence>" - <<'JSON'
@@ -40,7 +42,7 @@ The output lists the sub-tasks in score order. Each item has a `score` from 0 to
 - `score < 1`: drop the sub-task. Tell the user in one line which sub-task you dropped and why.
 - `confidence < 0.6`: decide the sub-task yourself. Tell the user that you decided it.
 
-If more than 5 sub-tasks are in scope, send the 5 with the highest scores first. The other sub-tasks wait for the next round.
+Send the 5 with the highest scores first. The other sub-tasks wait for the next round.
 
 ## 3. Plan
 
@@ -51,8 +53,14 @@ Write this table before you send any brief. Select a short task name. The task n
 
 Rules:
 - Use 1 to 5 `coder` agents. Each coder owns a set of files. No two coders own the same file.
-- Use one `tester` in mode WRITE. Its brief has the acceptance criteria, the task name, and the dev server command.
-- Each brief has 4 parts: goal, exact paths, constraints, report format. If one part is missing, do not send the brief.
+- Use one `tester` in mode WRITE.
+- Each coder brief has 5 parts. If one part is missing, do not send the brief.
+  1. The goal, with the acceptance criteria that the coder owns.
+  2. The context, pasted in: the code to change with `path:start-end`, the callers of each function that changes, one example to copy, and the conventions.
+  3. The constraints.
+  4. The commands: the check command, the test command, and the dev server command.
+  5. The report format.
+- The tester brief has the acceptance criteria, the task name, and the dev server command. For each criterion it gives the route or URL and the expected text or state.
 
 ## 4. Send
 
@@ -60,23 +68,24 @@ Send every coder brief and the tester brief (mode WRITE) in one message. Then wa
 
 ## 5. Run tests
 
-When every coder reports, send `tester` a brief in mode RUN with the task name.
+When every coder reports, make these two calls in one message:
 
-- If all tests pass, continue at step 6.
-- If a test fails, send the failure output to the coder that owns the file. Then send the tester a RUN brief again. Do this at most 2 times. If a test still fails, stop. Tell the user and include the output.
+- Send `tester` a brief in mode RUN with the task name. Codex has no documented call that sends a follow-up to an existing agent thread, so this is a new `tester` spawn.
+- Send `verifier` a brief with every coder report and the acceptance criteria. Do not wait for the test result.
 
 ## 6. Check with Jev
 
-Send `verifier` a brief with every coder report, the tester RUN report, and the acceptance criteria. The verifier splits the reports into claims and scores each claim with `jev check`.
+The verifier splits the reports into claims and scores each claim with `jev check`. Read the test result and the verifier result together:
 
-- If the result is `PASS`, continue at step 7.
-- If the result is `ESCALATE`, repeat the flagged step with the full file in context. Then send the verifier a brief again. Do this at most 2 times. If a claim is still flagged, tell the user and include the flagged claims.
+- All tests pass and the result is `PASS`: continue at step 7.
+- A test fails: send a new brief to a `coder` for the file that failed. The brief is the original brief of the coder that owns the file, plus the failure output. When the coder reports, repeat step 5. Do this at most 2 times. If a test still fails, stop. Tell the user and include the output.
+- The result is `ESCALATE`: send a new brief to a member of the same type as the member that made the flagged claim. The brief is the original brief, the flagged claims, and the full file. When the member reports, repeat step 5. Do this at most 2 times. If a claim is still flagged, tell the user and include the flagged claims.
 
 ## 7. Report to the user
 
 Tell the user:
 
-- The ranked sub-tasks, and which sub-tasks you deferred or dropped.
+- The sub-tasks, and which sub-tasks you deferred or dropped.
 - The files that changed.
 - The test results.
 - The screenshot folder.
@@ -84,8 +93,12 @@ Tell the user:
 
 Design decisions and this summary stay with you.
 
-Log query:
+Log queries:
 
 ```bash
 sqlite3 .team/agent-log.sqlite "select id, ts, agent, description from runs order by id"
+```
+
+```bash
+sqlite3 .team/agent-log.sqlite "select agent, description, tool_use_id, seconds from durations order by seconds desc"
 ```

@@ -7,7 +7,7 @@ description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyz
 
 Task: `$ARGUMENTS`. If there are no arguments, use the last task that the user gave in this conversation.
 
-You are the Leader. Do not read whole files before the plan exists. Use Glob and Grep to find the files and the line ranges. Do not write code yourself before the plan exists. Hooks write every Agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
+You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every Agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
 
 ## 1. Analyze
 
@@ -51,8 +51,14 @@ Write this table before you send any brief. Select a short task name. The task n
 
 Rules:
 - Use 1 to 5 `agent-team:coder`. Each coder owns a set of files. No two coders own the same file.
-- Use one `agent-team:tester` in mode WRITE. Its brief has the acceptance criteria, the task name, and the dev server command.
-- Each coder brief has 5 parts. The goal with the acceptance criteria that the coder owns. The exact paths with line ranges as `path:start-end`. One existing file or function that shows the pattern to copy. The constraints. The report format. If one part is missing, do not send the brief.
+- Use one `agent-team:tester` in mode WRITE.
+- Each coder brief has 5 parts. If one part is missing, do not send the brief.
+  1. The goal, with the acceptance criteria that the coder owns.
+  2. The context, pasted in: the code to change with `path:start-end`, the callers of each function that changes, one example to copy, and the conventions.
+  3. The constraints.
+  4. The commands: the check command, the test command, and the dev server command.
+  5. The report format.
+- The tester brief has the acceptance criteria, the task name, and the dev server command. For each criterion it gives the route or URL and the expected text or state.
 
 ## 4. Send
 

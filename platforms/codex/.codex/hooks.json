@@ -1,6 +1,18 @@
 {
-  "description": "agent-team: log every spawned agent and the Leader's final message into .team/agent-log.sqlite",
+  "description": "agent-team: log the start and the end of every spawned agent, each member report, and the Leader's final message into .team/agent-log.sqlite",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/log_agent.py\"; [ -f \"$f\" ] || f=\"$HOME/.codex/hooks/log_agent.py\"; python3 \"$f\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Agent",

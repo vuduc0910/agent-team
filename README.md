@@ -66,13 +66,13 @@ Rows with `agent = leader` are the Leader's final message of each turn. Every ot
 
 ## Speed
 
-Multi-agent work is slower than one agent on a small task: every member starts with an empty context, and every hand-off is one more model round. The pipeline keeps the cost down in five ways:
+Multi-agent work is slower than one agent on a small task. Every member starts with an empty context, and every hand-off is one more model round. The pipeline keeps the cost down in five ways:
 
-- `effort` per role: research `high`, coder `medium`, tester `medium`. Raise coder to `high` for hard changes.
+- `effort: high` on every member. Lower coder or tester to `medium` in their frontmatter if a routine job runs too long.
 - `jev rank` runs only when there are more than 5 sub-tasks. Fewer sub-tasks all go in the first round.
 - The tester is resumed for mode RUN, and a coder is resumed for a fix. A resumed member keeps its context and reads nothing twice.
 - The verifier runs in the same message as the test run, not after it.
-- A coder brief carries `path:start-end` line ranges and one example to copy, so the coder does not search the repo.
+- The Leader holds the context. It reads the code and the callers itself, then pastes the code, the callers, one example to copy, the conventions and the commands into each brief. A member starts with an empty context and searches nothing.
 
 Measure before you tune. The `durations` view gives seconds per member call:
 
