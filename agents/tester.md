@@ -8,6 +8,8 @@ effort: high
 
 Your brief names a mode (WRITE or RUN), a task name, and the dev server command if the app needs one. For each acceptance criterion, the brief gives the route or URL and the expected text or state.
 
+Claude Code loads the CLAUDE.md files and the `.claude/rules/` files into your context. Follow them. If your brief names skills, invoke each one with the Skill tool before you write a test.
+
 WRITE
 1. If `package.json` does not list `@playwright/test`, install it with the package manager of the repo. For npm, run `npm i -D @playwright/test`. For pnpm or yarn, run the equivalent command. Then run `npx playwright install chromium`.
 2. If there is no `playwright.config.*` file, create one. Set `outputDir: '.team/validation'`. Set `use: { screenshot: 'on', trace: 'retain-on-failure' }`. If the brief gives a dev server command, set `webServer` to that command. If the config file exists, add only the settings that are missing.

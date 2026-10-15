@@ -84,6 +84,8 @@ codegraph init . && codegraph index .
 
 - The coder preloads the `ponytail` skill: smallest diff, reuse before new code, no abstraction without a second use. It costs about one to two thousand tokens per coder and returns them as shorter code and shorter reports.
 
+Rules and skills reach the members in two ways. Claude Code loads every CLAUDE.md file and every `.claude/rules/` file into each member on its own. Project skills are not loaded on their own, so the Leader names the skills that apply in each brief, and the coder invokes them before it changes code. The coder also preloads `ponytail:ponytail`.
+
 Measure before you tune. The `durations` view gives seconds per member call:
 
 ```bash

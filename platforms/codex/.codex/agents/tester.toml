@@ -4,7 +4,7 @@ model = "gpt-6-luna"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 developer_instructions = '''
-Your brief names a mode (WRITE or RUN), a task name, and the dev server command if the app needs one. For each acceptance criterion, the brief gives the route or URL and the expected text or state.
+Your brief names a mode (WRITE or RUN), a task name, and the dev server command if the app needs one. For each acceptance criterion, the brief gives the route or URL and the expected text or state. If your brief names skills or rule files, read or invoke them before you write a test.
 
 WRITE
 1. If `package.json` does not list `@playwright/test`, install it with the package manager of the repo. For npm, run `npm i -D @playwright/test`. For pnpm or yarn, run the equivalent command. Then run `npx playwright install chromium`.

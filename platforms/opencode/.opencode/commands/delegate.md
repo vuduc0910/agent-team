@@ -51,10 +51,11 @@ Rules:
 - Use one `tester` subagent in mode WRITE.
 - Each coder brief has 5 parts. If one part is missing, do not send the brief.
   1. The goal, with the acceptance criteria that the coder owns.
-  2. The context, pasted in: the code to change with `path:start-end`, the callers of each function that changes, one example to copy, and the conventions.
+  2. The context, pasted in: the code to change with `path:start-end`, the callers of each function that changes, one example to copy, and the conventions. Name the project skills that the member must invoke.
   3. The constraints.
   4. The commands: the check command, the test command, and the dev server command.
   5. The report format.
+- Name in each brief the project skills and rule files whose scope matches the files that the member changes.
 - The tester brief has the acceptance criteria, the task name, and the dev server command. For each criterion it gives the route or URL and the expected text or state.
 
 ## 4. Send
