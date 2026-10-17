@@ -84,6 +84,8 @@ codegraph init . && codegraph index .
 
 - The coder preloads the `ponytail` skill: smallest diff, reuse before new code, no abstraction without a second use. It costs about one to two thousand tokens per coder and returns them as shorter code and shorter reports.
 
+The Leader owns the integration. Before the briefs go out, it writes a contract: every function name and signature, type, route, selector, and expected state at each boundary between two members. Every brief carries the contract. Coders implement it exactly and do not explore. The tester writes the tests from it while the coders work. When the coders report, the Leader checks each boundary and runs the build before any test runs.
+
 Rules and skills reach the members in two ways. Claude Code loads every CLAUDE.md file and every `.claude/rules/` file into each member on its own. Project skills are not loaded on their own, so the Leader names the skills that apply in each brief, and the coder invokes them before it changes code. The coder also preloads `ponytail:ponytail`.
 
 Measure before you tune. The `durations` view gives seconds per member call:

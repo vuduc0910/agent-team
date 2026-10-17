@@ -61,15 +61,24 @@ Rules:
   4. The commands: the check command, the test command, and the dev server command.
   5. The report format.
 - Name in each brief the project skills and rule files whose scope matches the files that the member changes.
+- Write the contract before the briefs. The contract lists every boundary between two members. For each boundary it gives the function name and signature, the type, and the route with its response. It also gives the `data-testid` or selector and the expected text or state. Put the contract in every brief. Coders implement the contract exactly. The tester writes the tests against the contract.
 - The tester brief has the acceptance criteria, the task name, and the dev server command. For each criterion it gives the route or URL and the expected text or state.
 
 ## 4. Send
 
-Send every coder brief and the tester brief (mode WRITE) in one message. Then wait for every report.
+Send every coder brief and the tester brief (mode WRITE) in one message. Then wait for every report. The tester writes the tests from the contract while the coders work. It does not wait for the code.
 
-## 5. Run tests
+## 5. Integrate and run tests
 
-When every coder reports, make these two calls in one message:
+When every coder reports, check the integration yourself before any test runs:
+
+- Read the diff of each coder with `git diff -- <files>`.
+- Check each boundary against the contract: names, signatures, routes, selectors.
+- Run the check command, for example the typecheck or the build.
+
+If a boundary does not match or the check fails, send the exact mismatch to the coder that owns the file. Then check again.
+
+When the check passes, make these two calls in one message:
 
 - Send `tester` a brief in mode RUN with the task name. Codex has no documented call that sends a follow-up to an existing agent thread, so this is a new `tester` spawn.
 - Send `verifier` a brief with every coder report and the acceptance criteria. Do not wait for the test result.

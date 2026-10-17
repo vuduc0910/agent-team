@@ -9,13 +9,13 @@ flowchart TD
     RS -- "OPEN questions" --> Q["Ask user"] --> R
     RS -- "spec" --> R
     A -- "clean" --> R["2 · Leader: jev rank sub-tasks<br/>only when more than 5"]
-    R -- "score ≥ 2" --> P["3 · Leader reads the code, plans<br/>context pasted into each brief<br/>each coder owns disjoint files"]
+    R -- "score ≥ 2" --> P["3 · Leader reads the code, plans<br/>writes the contract<br/>context pasted into each brief"]
     R -- "1 ≤ score &lt; 2" --> D1["Defer, tell user"]
     R -- "score &lt; 1" --> D2["Drop, tell user"]
     P --> C["4 · agent-team:coder ×1..5 · opus<br/>in parallel"]
-    P --> TW["4 · agent-team:tester WRITE · sonnet<br/>install Playwright, 1 test per criterion"]
+    P --> TW["4 · agent-team:tester WRITE · sonnet<br/>tests from the contract, no waiting"]
     C --> TR
-    TW --> TR["5 · agent-team:tester RUN, resumed<br/>screenshots → .team/validation/&lt;task&gt;/"]
+    TW --> TR["5 · Leader checks the contract and the build<br/>tester RUN, resumed<br/>screenshots → .team/validation/&lt;task&gt;/"]
     C --> V["6 · jev-opus-kit:jev-verifier<br/>jev check every claim<br/>same message as step 5"]
     TR -- "FAIL, max 2 rounds, resume coder" --> C
     V -- "ESCALATE, max 2 rounds, resume member" --> C
@@ -37,9 +37,9 @@ flowchart TD
 | 1 Analyze | Leader | fable / opus | task | clean or not |
 | 1b Research | `agent-team:research` | opus | task + ambiguities | spec, acceptance criteria, OPEN questions |
 | 2 Rank | Leader runs `jev rank`, only when more than 5 sub-tasks | CLI | goal + sub-tasks | score 0..3, confidence |
-| 3 Plan | Leader reads the files and the callers, through codegraph when available | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with pasted context |
+| 3 Plan | Leader reads the files and the callers, through codegraph when available, and writes the contract | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with pasted context |
 | 4 Send | `agent-team:coder` ×1..5, `agent-team:tester` WRITE, all effort high | opus, sonnet | brief with pasted code, callers, example, conventions, commands | diff + check; test file |
-| 5 Run | `agent-team:tester` RUN, resumed with SendMessage | sonnet | task name | PASS/FAIL, screenshot paths |
+| 5 Integrate and run | Leader checks every boundary against the contract and runs the build, then `agent-team:tester` RUN, resumed with SendMessage | sonnet | task name | PASS/FAIL, screenshot paths |
 | 6 Check | `jev-opus-kit:jev-verifier`, sent in the same message as step 5 | plugin | coder reports + criteria | PASS, or ESCALATE with flagged claims |
 | 7 Report | Leader | | | files, tests, screenshot folder, Jev verdict |
 
