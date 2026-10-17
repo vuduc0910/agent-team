@@ -51,8 +51,8 @@ Or just give a task. The rules in `rules/LEADER.md` are injected into every sess
 - `agents/research.md`: clarifies an unclean task, read-only, opus, has the codegraph tools.
 - `agents/coder.md`: implements a brief, opus, up to 5 in parallel on disjoint files, preloads the `ponytail:ponytail` skill.
 - `agents/tester.md`: Playwright, modes WRITE and RUN, sonnet.
-- `hooks/hooks.json`: SessionStart, PreToolUse and PostToolUse on `Agent`, Stop.
-- `scripts/log_agent.py`: SQLite writer. `python3 scripts/log_agent.py --selftest` to check it.
+- `hooks/hooks.json`: SessionStart, PreToolUse and PostToolUse on `Agent`, SubagentStop, Stop.
+- `scripts/log_agent.py`: SQLite writer with token accounting. `python3 scripts/log_agent.py --selftest` to check it.
 - `docs/flow.md`, `docs/flow.png`: the Mermaid graph, its PNG render, and the step table.
 - `platforms/`: ports for other tools, each with its own README.
 
@@ -88,11 +88,25 @@ The Leader owns the integration. Before the briefs go out, it writes a contract:
 
 Rules and skills reach the members in two ways. Claude Code loads every CLAUDE.md file and every `.claude/rules/` file into each member on its own. Project skills are not loaded on their own, so the Leader names the skills that apply in each brief, and the coder invokes them before it changes code. The coder also preloads `ponytail:ponytail`.
 
-Measure before you tune. The `durations` view gives seconds per member call:
+Measure before you tune. The `durations` view gives seconds per member call, and the token views give tokens per turn and per member run:
 
 ```bash
 sqlite3 .team/agent-log.sqlite "select agent, description, seconds from durations order by seconds desc"
 ```
+
+```bash
+sqlite3 .team/agent-log.sqlite "select ts, leader_in + leader_out + leader_cache_write as leader_new, leader_cache_read, member_runs, member_new, member_cache_read from turn_tokens order by id desc limit 5"
+```
+
+## Tokens
+
+After every turn the Stop hook prints one line, for example `agent-team tokens this turn: leader new 12.3k (in 2, out 637, cache write 11.7k), cache read 38.9k. members: 3 runs, new 405k, cache read 4.5M. total new 417k.` The numbers come from the session transcript and the member transcripts, one `usage` per model response.
+
+- `new` is `input + output + cache write`. These tokens were sent or produced for the first time.
+- `cache read` is the prompt prefix served from the cache. It costs about a tenth of a new input token.
+- The transcript stores `output` as it was at the start of the stream, so `output` reads low. The full output of a response appears in `cache write` of the next response.
+
+The `member_tokens` view gives one row per member run, and `turn_tokens` one row per Leader turn. The Leader reports the member tokens of the turn in step 7. Token measurement exists in the Claude Code plugin only. The ports log the same rows without the token columns.
 
 Raise the delegation threshold in `rules/LEADER.md` if small tasks still go through the pipeline.
 

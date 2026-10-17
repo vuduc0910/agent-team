@@ -17,7 +17,7 @@ The pipeline has 7 steps:
 4. The Leader sends, in one message, up to 5 `agent-team:coder` briefs and one `agent-team:tester` brief in mode WRITE. Each brief carries the context pasted in: the code to change, the callers, one example to copy, and the conventions. Each brief names the project skills that apply. The tester writes the tests from the contract while the coders work. The tester installs Playwright and writes one test for each acceptance criterion.
 5. When every coder reports, the Leader checks every boundary against the contract and runs the check command. Then the Leader resumes the tester in mode RUN and sends every report to `jev-opus-kit:jev-verifier`, in the same message. The tester saves screenshots in `.team/validation/<task>/`. If a test fails, the Leader resumes the coder that owns the file with the failure output. This loop runs at most 2 times.
 6. The verifier splits the reports into claims and scores each claim with `jev check`. The result must be PASS. If the result is ESCALATE, the Leader resumes the member that made the flagged claim. This loop runs at most 2 times.
-7. Hooks write every Agent call and the final message of the Leader to `.team/agent-log.sqlite`. The Leader does nothing for this step.
+7. Hooks write every Agent call, every member stop, and the final message of the Leader to `.team/agent-log.sqlite`, with the token counts. After each turn the Stop hook shows the token total for the turn. The Leader does nothing for this step.
 
 ## Who gets what
 

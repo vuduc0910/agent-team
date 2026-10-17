@@ -98,10 +98,15 @@ Tell the user:
 - The test results.
 - The screenshot folder.
 - The Jev result and the number of flagged claims.
+- The member tokens for this turn, from the query below. The hook adds the Leader tokens after this message.
 
 Design decisions and this summary stay with you.
 
 Log queries:
+
+```bash
+sqlite3 .team/agent-log.sqlite "select agent, sum(in_tokens + out_tokens + cache_write) as new_tokens, sum(cache_read) as cache_read from member_tokens where id > coalesce((select max(id) from runs where agent = 'leader'), 0) group by agent"
+```
 
 ```bash
 sqlite3 .team/agent-log.sqlite "select id, ts, agent, description from runs order by id"

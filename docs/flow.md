@@ -56,9 +56,10 @@ flowchart TD
 | `SessionStart` | session opens | injects `rules/LEADER.md` into context |
 | `PreToolUse` matcher `Agent` | the Leader sends a brief | `description = start`, `tool_use_id` |
 | `PostToolUse` matcher `Agent` | a member reports | `agent`, `description`, `prompt` is the brief, `response` is the report, `tool_use_id` |
-| `Stop` | Leader ends a turn | `agent = leader`, `response` is the final message |
+| `SubagentStop` | a member ends | `agent`, `agent_id`, `model`, and the token totals of the member transcript |
+| `Stop` | Leader ends a turn | `agent = leader`, `response` is the final message, `model`, and the token totals of the session transcript. The hook returns a `systemMessage` with the token count for the turn |
 
-Table `runs(id, ts, session_id, agent, description, prompt, response, tool_use_id)` in the project's `.team/agent-log.sqlite`. The view `durations` joins each report to its start row and gives `seconds` per member call:
+Table `runs(id, ts, session_id, agent, description, prompt, response, tool_use_id, agent_id, model, in_tokens, out_tokens, cache_read, cache_write)` in the project's `.team/agent-log.sqlite`. Token columns hold the cumulative totals of a transcript at that moment. Three views compute the differences: `durations` gives `seconds` per member call, `member_tokens` gives the tokens of each member run, and `turn_tokens` gives the Leader tokens and the member tokens of each turn:
 
 ```bash
 sqlite3 .team/agent-log.sqlite "select agent, description, seconds from durations order by seconds desc"
