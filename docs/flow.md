@@ -64,3 +64,7 @@ Table `runs(id, ts, session_id, agent, description, prompt, response, tool_use_i
 ```bash
 sqlite3 .team/agent-log.sqlite "select agent, description, seconds from durations order by seconds desc"
 ```
+
+```bash
+sqlite3 .team/agent-log.sqlite "select ts, leader_in + leader_out + leader_cache_write as leader_new, leader_cache_read, member_runs, member_new, member_cache_read from turn_tokens order by id desc limit 5"
+```
