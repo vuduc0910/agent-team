@@ -11,6 +11,7 @@ Full graph and step table: [docs/flow.md](docs/flow.md).
 - The `jev-opus-kit` plugin installed. It provides the `jev` CLI and the `jev-opus-kit:jev-verifier` agent.
 - `python3` for the log hook.
 - `node` and npm in the target project, so the tester can install Playwright.
+- Optional: Trail (`npm install -g @trailhq/trail-code`, then `trail init` in the project). The Leader starts every task from the repo's learnings and reads code spans from Trail instead of whole files. See Memory below.
 - Optional: the `codegraph` MCP server (`codegraph install`, then `codegraph init . && codegraph index .` in the project). The Leader and research read line ranges from the graph instead of whole files.
 - Optional: the `ponytail` plugin. The coder preloads its skill. Without the plugin the coder runs the same, with a warning in the debug log.
 
@@ -97,6 +98,10 @@ sqlite3 .team/agent-log.sqlite "select agent, description, seconds from duration
 ```bash
 sqlite3 .team/agent-log.sqlite "select ts, leader_in + leader_out + leader_cache_write as leader_new, leader_cache_read, member_runs, member_new, member_cache_read from turn_tokens order by id desc limit 5"
 ```
+
+## Memory
+
+Trail gives the pipeline memory across sessions. `.trail/learnings/` holds short markdown notes, committed with the code: what a session decided, tried, and ruled out. The Leader runs `trail ask "<task>" --source` before it plans, reads the learnings that match, and gets the code at exact `file:line` with the crux inlined, so it does not read whole files. For the contract it runs `trail callers <symbol> --depth all` and `trail skeleton <file>`. At the end of a run it saves what the code cannot tell the next session with `trail note`, runs `trail check` before a commit, and commits the learning with the change. Codegraph stays as the fallback when Trail is not installed, and Grep when neither is.
 
 ## Tokens
 

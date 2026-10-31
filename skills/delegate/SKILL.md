@@ -7,9 +7,11 @@ description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyz
 
 Task: `$ARGUMENTS`. If there are no arguments, use the last task that the user gave in this conversation.
 
-You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. If the codegraph tools are available, call `codegraph_context` with the task. Then call `codegraph_callers` for each function that changes. Read only the line ranges that the graph returns. Without codegraph, read the files and find the callers with Grep. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every Agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
+You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. Use the first tool that exists on the machine. With Trail: run `trail ask "<task>" --source` for the code, `trail callers <symbol> --depth all` for each function that changes, and `trail skeleton <file>` for each file that a member wires into. Paste the spans that Trail returns. With codegraph: call `codegraph_context` with the task, then `codegraph_callers` for each function that changes. Without both, read the files and find the callers with Grep. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every Agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
 
 ## 1. Analyze
+
+When the `trail` command exists, run `trail ask "<task>" --source` first. Read the learnings above the code before you plan. They tell you what past sessions decided, tried, and ruled out. Without Trail, read the files in `.trail/learnings/` that name the files of the task.
 
 The task is CLEAN when all 3 conditions are true:
 
@@ -101,6 +103,15 @@ Tell the user:
 - The member tokens for this turn, from the query below. The hook adds the Leader tokens after this message.
 
 Design decisions and this summary stay with you.
+
+Save a learning when the run found what the code cannot tell the next session. Examples:
+
+- a contract decision with its reason
+- the real cause of a failed test
+- a flagged claim and its fix
+- a dropped sub-task and why
+
+Run `trail note --title "<the decision in plain words>"` with the text on stdin, under `## Decided`, `## Tried and ruled out`, and `## Watch out`. Run `trail check` before any commit. Commit the learning with the change.
 
 Log queries:
 

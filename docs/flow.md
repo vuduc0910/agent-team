@@ -34,14 +34,14 @@ flowchart TD
 
 | Step | Who | Model | In | Out |
 |---|---|---|---|---|
-| 1 Analyze | Leader | fable / opus | task | clean or not |
+| 1 Analyze | Leader, after `trail ask` when the `trail` command exists | fable / opus | task + learnings | clean or not |
 | 1b Research | `agent-team:research` | opus | task + ambiguities | spec, acceptance criteria, OPEN questions |
 | 2 Rank | Leader runs `jev rank`, only when more than 5 sub-tasks | CLI | goal + sub-tasks | score 0..3, confidence |
-| 3 Plan | Leader reads the files and the callers, through codegraph when available, and writes the contract | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with pasted context |
+| 3 Plan | Leader reads the spans from Trail, or codegraph, or Grep, and writes the contract | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with pasted context |
 | 4 Send | `agent-team:coder` ×1..5, `agent-team:tester` WRITE, all effort high | opus, sonnet | brief with pasted code, callers, example, conventions, commands | diff + check; test file |
 | 5 Integrate and run | Leader checks every boundary against the contract and runs the build, then `agent-team:tester` RUN, resumed with SendMessage | sonnet | task name | PASS/FAIL, screenshot paths |
 | 6 Check | `jev-opus-kit:jev-verifier`, sent in the same message as step 5 | plugin | coder reports + criteria | PASS, or ESCALATE with flagged claims |
-| 7 Report | Leader | | | files, tests, screenshot folder, Jev verdict |
+| 7 Report | Leader, then `trail note` and `trail check` | | | files, tests, screenshot folder, Jev verdict, member tokens, a learning |
 
 ## Thresholds
 
