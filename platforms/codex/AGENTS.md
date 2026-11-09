@@ -63,4 +63,5 @@ Every member writes its report in this shape. The Leader does not accept a repor
 - The Leader names in each brief the project skills and rule files that apply.
 - The Leader owns the integration. The Leader writes the contract and checks every boundary before the tests run.
 - The Leader reads the learnings in `.trail/learnings/` first and never edits them. The Leader saves new ones with `trail note` and commits them with the change.
+- Members write terse: answer first, no filler, payload verbatim.
 - Codex has no documented call that sends a follow-up to an existing agent thread. For a second round, the Leader spawns a new member with the full brief. A new member must read everything again.

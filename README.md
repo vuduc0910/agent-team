@@ -13,6 +13,7 @@ Full graph and step table: [docs/flow.md](docs/flow.md).
 - `node` and npm in the target project, so the tester can install Playwright.
 - Optional: Trail (`npm install -g @trailhq/trail-code`, then `trail init` in the project). The Leader starts every task from the repo's learnings and reads code spans from Trail instead of whole files. See Memory below.
 - Optional: the `codegraph` MCP server (`codegraph install`, then `codegraph init . && codegraph index .` in the project). The Leader and research read line ranges from the graph instead of whole files.
+- Optional: the `caveman` plugin. Every member preloads its skill and writes terse output. Without the plugin the terse rule in each member prompt still applies.
 - Optional: the `ponytail` plugin. The coder preloads its skill. Without the plugin the coder runs the same, with a warning in the debug log.
 
 ## Install (Claude Code)
@@ -50,7 +51,7 @@ Or just give a task. The rules in `rules/LEADER.md` are injected into every sess
 - `rules/LEADER.md`: the Leader's rules, injected by the SessionStart hook.
 - `skills/delegate/SKILL.md`: the 7-step pipeline.
 - `agents/research.md`: clarifies an unclean task, read-only, opus, has the codegraph tools.
-- `agents/coder.md`: implements a brief, opus, up to 5 in parallel on disjoint files, preloads the `ponytail:ponytail` skill.
+- `agents/coder.md`: implements a brief, opus, up to 5 in parallel on disjoint files, preloads the `ponytail:ponytail` and `caveman:caveman` skills.
 - `agents/tester.md`: Playwright, modes WRITE and RUN, sonnet.
 - `hooks/hooks.json`: SessionStart, PreToolUse and PostToolUse on `Agent`, SubagentStop, Stop.
 - `scripts/log_agent.py`: SQLite writer with token accounting. `python3 scripts/log_agent.py --selftest` to check it.
@@ -83,6 +84,7 @@ Multi-agent work is slower than one agent on a small task. Every member starts w
 codegraph init . && codegraph index .
 ```
 
+- Every member preloads the `caveman` skill and writes terse: answer first, no filler, payload verbatim. Output tokens cost five times an input token, and the Leader reads every report, so a shorter report saves twice.
 - The coder preloads the `ponytail` skill: smallest diff, reuse before new code, no abstraction without a second use. It costs about one to two thousand tokens per coder and returns them as shorter code and shorter reports.
 
 The Leader owns the integration. Before the briefs go out, it writes a contract: every function name and signature, type, route, selector, and expected state at each boundary between two members. Every brief carries the contract. Coders implement it exactly and do not explore. The tester writes the tests from it while the coders work. When the coders report, the Leader checks each boundary and runs the build before any test runs.

@@ -64,3 +64,4 @@ Every member writes its report in this shape. The Leader does not accept a repor
 - Members get the CLAUDE.md files and the `.claude/rules/` files from Claude Code. The Leader names the project skills that apply in each brief.
 - The Leader owns the integration. The Leader writes the contract and checks every boundary before the tests run.
 - The Leader reads the learnings in `.trail/learnings/` first and never edits them. The Leader saves new ones with `trail note` and commits them with the change.
+- Members write terse: answer first, no filler, payload verbatim. The `caveman:caveman` skill gives the full rule when the caveman plugin exists.

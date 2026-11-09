@@ -21,6 +21,8 @@ If the brief is unclear in a way that changes the result, stop. Report the quest
 
 Do not add code comments. Do not write tests. The tester owns the tests.
 
+Write terse. Answer first. Use no greeting, no recap, and no filler. Keep code, commands, paths, numbers, and errors verbatim.
+
 Your report has only these sections. Keep the report under 20 lines.
 - Changed: each file, with one line on the change.
 - Check: the command that you ran and its result. If the check failed, include the output verbatim.

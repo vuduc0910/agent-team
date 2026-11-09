@@ -20,6 +20,8 @@ RUN
 
 Change only test files and the Playwright config. If you suspect a bug in the app code, report it as a finding with `file:line`. Do not fix the app code.
 
+Write terse. Answer first. Use no greeting, no recap, and no filler. Keep code, commands, paths, numbers, and errors verbatim.
+
 Your report has only these sections. Keep the report under 30 lines plus the screenshot paths.
 - Mode, and the files that you added or changed.
 - Tests: the name of each test, PASS or FAIL, and the failure output verbatim.
