@@ -1,6 +1,6 @@
 # agent-team
 
-A Claude Code plugin for the **Leader–Member** working style. The Leader is the main session on fable or opus. It analyzes, prioritizes with `jev rank`, dispatches up to 5 coders in parallel alongside a Playwright tester, verifies every claim with `jev-verifier`, and every step is logged to SQLite.
+A Claude Code plugin for the **Leader–Member** working style. The Leader is the main session on fable or opus. It analyzes, prioritizes with `jev rank`, dispatches up to 5 coders in parallel alongside a Playwright tester, checks the integration itself, verifies risky changes with `jev-verifier`, and logs every step to SQLite.
 
 Full graph and step table: [docs/flow.md](docs/flow.md).
 
@@ -10,7 +10,7 @@ Full graph and step table: [docs/flow.md](docs/flow.md).
 
 - The `jev-opus-kit` plugin installed. It provides the `jev` CLI and the `jev-opus-kit:jev-verifier` agent.
 - `python3` for the log hook.
-- `node` and npm in the target project, so the tester can install Playwright.
+- `node` and npm in the target project. Install Playwright once per project before the first run, so the pipeline does not pay for it: `npm i -D @playwright/test && npx playwright install chromium`. The tester installs it only when it is missing.
 - Optional: Trail (`npm install -g @trailhq/trail-code`, then `trail init` in the project). The Leader starts every task from the repo's learnings and reads code spans from Trail instead of whole files. See Memory below.
 - Optional: the `codegraph` MCP server (`codegraph install`, then `codegraph init . && codegraph index .` in the project). The Leader and research read line ranges from the graph instead of whole files.
 - Optional: the `caveman` plugin. Every member preloads its skill and writes terse output. Without the plugin the terse rule in each member prompt still applies.
@@ -44,7 +44,7 @@ Open a new session after installing. Hooks, agents and the skill load only at se
 /agent-team:delegate <task>
 ```
 
-Or just give a task. The rules in `rules/LEADER.md` are injected into every session and make the Leader run the skill for any task touching 3 or more files.
+Or just give a task. The rules in `rules/LEADER.md` are injected into every session and make the Leader run the skill for any task that changes 5 or more files. Ask for the pipeline by name to run it on a smaller task.
 
 ## Files
 
@@ -70,13 +70,16 @@ Rows with `agent = leader` are the Leader's final message of each turn. Every ot
 
 ## Speed
 
-Multi-agent work is slower than one agent on a small task. Every member starts with an empty context, and every hand-off is one more model round. The pipeline keeps the cost down in five ways:
+Multi-agent work is slower than one agent on a small task. Every member starts with an empty context, and every hand-off is one more model round. The pipeline keeps the cost down in these ways:
 
-- `effort: high` on every member. Lower coder or tester to `medium` in their frontmatter if a routine job runs too long.
+- The pipeline starts at 5 files. A smaller task stays with one agent, which is the fastest path.
+- `effort` per role: research `high`, coder `medium`, tester `high`. Raise the coder to `high` in its frontmatter for hard changes.
 - `jev rank` runs only when there are more than 5 sub-tasks. Fewer sub-tasks all go in the first round.
 - The tester is resumed for mode RUN, and a coder is resumed for a fix. A resumed member keeps its context and reads nothing twice.
-- The verifier runs in the same message as the test run, not after it.
-- The Leader holds the context. It reads the code and the callers itself, then pastes the code, the callers, one example to copy, the conventions and the commands into each brief. A member starts with an empty context and searches nothing.
+- The verifier runs only for a change that touches authentication, money, or concurrency, and then in the same message as the test run. Other changes skip that phase.
+- Coder and tester set `experimental.cacheTtl: 1h` in their frontmatter. A member that the Leader resumes after more than 5 minutes still reads its prefix from the cache. Claude Code ignores `1h` while a subscription is using usage credits. `"subagentPromptCacheTtl": "1h"` in settings does the same for every subagent.
+- The Playwright config sets `fullyParallel: true` and `webServer.reuseExistingServer: true`.
+- The Leader holds the context but does not copy code into briefs. A brief carries the contract, the conventions, and exact `path:start-end` ranges. Each member reads those ranges in one message and searches nothing. Copied code would leave the Leader as output tokens, the slowest and most expensive kind.
 
 - With codegraph in the project, the Leader calls `codegraph_context` and `codegraph_callers` and reads only the ranges the graph returns. Set it up once per project:
 
@@ -115,7 +118,7 @@ After every turn the Stop hook prints one line, for example `agent-team tokens t
 
 The `member_tokens` view gives one row per member run, and `turn_tokens` one row per Leader turn. The Leader reports the member tokens of the turn in step 7. Token measurement exists in the Claude Code plugin only. The ports log the same rows without the token columns.
 
-Raise the delegation threshold in `rules/LEADER.md` if small tasks still go through the pipeline.
+Change the delegation threshold in `rules/LEADER.md` and in step 1 of `skills/delegate/SKILL.md`.
 
 ## Other platforms
 

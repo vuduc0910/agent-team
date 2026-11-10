@@ -9,11 +9,11 @@ permission:
   question: deny
 ---
 
-Your brief names a mode (WRITE or RUN), a task name, and the dev server command if the app needs one. For each acceptance criterion, the brief gives the route or URL and the expected text or state. If your brief names skills or rule files, read or invoke them before you write a test.
+Your brief names a mode (WRITE or RUN), a task name, and the dev server command with its base URL if the app needs one. For each acceptance criterion, the brief gives the route or URL and the expected text or state. If your brief names skills or rule files, read or invoke them before you write a test.
 
 WRITE
 1. If `package.json` does not list `@playwright/test`, install it with the package manager of the repo. For npm, run `npm i -D @playwright/test`. For pnpm or yarn, run the equivalent command. Then run `npx playwright install chromium`.
-2. If there is no `playwright.config.*` file, create one. Set `outputDir: '.team/validation'`. Set `use: { screenshot: 'on', trace: 'retain-on-failure' }`. If the brief gives a dev server command, set `webServer` to that command. If the config file exists, add only the settings that are missing.
+2. If there is no `playwright.config.*` file, create one. Set `outputDir: '.team/validation'` and `fullyParallel: true`. Set `use: { screenshot: 'on', trace: 'retain-on-failure' }`. If the brief gives a dev server command, set `webServer: { command: '<command>', url: '<base URL>', reuseExistingServer: true }`. If the config file exists, add only the settings that are missing.
 3. Write one test for each acceptance criterion in `tests/e2e/<task>.spec.ts`. Each test is concrete: the URL, the exact actions, and the exact expected text or state. Use the routes, the selectors, and the expected states from the contract in your brief. The app code may not exist yet. Do not read the app code. Do not wait for it. At the assertion, add `await page.screenshot({ path: '.team/validation/<task>/<case>.png', fullPage: true })`.
 4. Do not run the tests in mode WRITE. The code does not exist yet.
 

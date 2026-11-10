@@ -9,14 +9,14 @@ flowchart TD
     RS -- "OPEN questions" --> Q["Ask user"] --> R
     RS -- "spec" --> R
     A -- "clean" --> R["2 · Leader: jev rank sub-tasks<br/>only when more than 5"]
-    R -- "score ≥ 2" --> P["3 · Leader reads the code, plans<br/>writes the contract<br/>context pasted into each brief"]
+    R -- "score ≥ 2" --> P["3 · Leader reads the code, plans<br/>writes the contract<br/>contract and line ranges in each brief"]
     R -- "1 ≤ score &lt; 2" --> D1["Defer, tell user"]
     R -- "score &lt; 1" --> D2["Drop, tell user"]
     P --> C["4 · agent-team:coder ×1..5 · opus<br/>in parallel"]
     P --> TW["4 · agent-team:tester WRITE · sonnet<br/>tests from the contract, no waiting"]
     C --> TR
     TW --> TR["5 · Leader checks the contract and the build<br/>tester RUN, resumed<br/>screenshots → .team/validation/&lt;task&gt;/"]
-    C --> V["6 · jev-opus-kit:jev-verifier<br/>jev check every claim<br/>same message as step 5"]
+    C -- "auth, money, concurrency only" --> V["6 · jev-opus-kit:jev-verifier<br/>jev check every claim<br/>same message as step 5"]
     TR -- "FAIL, max 2 rounds, resume coder" --> C
     V -- "ESCALATE, max 2 rounds, resume member" --> C
     TR -- "PASS" --> F["7 · Leader reports to user"]
@@ -37,14 +37,16 @@ flowchart TD
 | 1 Analyze | Leader, after `trail ask` when the `trail` command exists | fable / opus | task + learnings | clean or not |
 | 1b Research | `agent-team:research` | opus | task + ambiguities | spec, acceptance criteria, OPEN questions |
 | 2 Rank | Leader runs `jev rank`, only when more than 5 sub-tasks | CLI | goal + sub-tasks | score 0..3, confidence |
-| 3 Plan | Leader reads the spans from Trail, or codegraph, or Grep, and writes the contract | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with pasted context |
-| 4 Send | `agent-team:coder` ×1..5, `agent-team:tester` WRITE, all effort high | opus, sonnet | brief with pasted code, callers, example, conventions, commands | diff + check; test file |
+| 3 Plan | Leader reads the spans from Trail, or codegraph, or Grep, and writes the contract | | sub-tasks with score ≥ 2 | table: Rank, Agent, Files owned, Brief with contract and line ranges |
+| 4 Send | `agent-team:coder` ×1..5, `agent-team:tester` WRITE, coder effort medium, tester effort high | opus, sonnet | brief with contract, conventions, `path:start-end` ranges, commands | diff + check; test file |
 | 5 Integrate and run | Leader checks every boundary against the contract and runs the build, then `agent-team:tester` RUN, resumed with SendMessage | sonnet | task name | PASS/FAIL, screenshot paths |
-| 6 Check | `jev-opus-kit:jev-verifier`, sent in the same message as step 5 | plugin | coder reports + criteria | PASS, or ESCALATE with flagged claims |
+| 6 Check | `jev-opus-kit:jev-verifier`, only for a change to authentication, money, or concurrency, sent in the same message as step 5 | plugin | coder reports + criteria | PASS, or ESCALATE with flagged claims |
 | 7 Report | Leader, then `trail note` and `trail check` | | | files, tests, screenshot folder, Jev verdict, member tokens, a learning |
 
 ## Thresholds
 
+- Pipeline: a task that changes 5 or more files. A smaller task stays with one agent unless the user asks for the pipeline.
+- Verifier: only for a change that touches authentication, money, or concurrency.
 - `jev rank`: score ≥ 2 goes now, 1 to under 2 is deferred, under 1 is dropped. Confidence under 0.6: the Leader decides.
 - `jev check`: unsupported ≥ 0.7 FLAG, 0.35 to 0.7 UNCERTAIN, under 0.35 OK. Any FLAG means ESCALATE.
 - Test-fix loop and ESCALATE loop: at most 2 rounds each, then stop and report to the user.

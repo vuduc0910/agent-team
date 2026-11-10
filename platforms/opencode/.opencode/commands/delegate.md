@@ -1,10 +1,10 @@
 ---
-description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyze the task. Send a task that is not clean to research. Rank the sub-tasks with jev rank when there are more than 5. Write a plan. Send up to 5 coders in parallel with a Playwright tester. Run the tests with screenshots and check every claim with jev check in the same turn. Report. Use this command at the start of a task that changes 3 or more files, or that has a build step and a test step. Invoke as /delegate <task>.
+description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyze the task. Send a task that is not clean to research. Rank the sub-tasks with jev rank when there are more than 5. Write a plan. Send up to 5 coders in parallel with a Playwright tester. Run the tests with screenshots. Check every claim with jev check when the change touches authentication, money, or concurrency. Report. Use this command at the start of a task that changes 5 or more files. Invoke as /delegate <task>.
 ---
 
 Task: `$ARGUMENTS`. If there are no arguments, use the last task that the user gave in this conversation.
 
-You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. Use Trail when the `trail` command exists: `trail ask "<task>" --source` for the code, `trail callers <symbol> --depth all` for each function that changes, and `trail skeleton <file>` for each file that a member wires into. Use another code graph tool when the `trail` command does not exist. Read only the spans that the tool returns. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. The `agent-log` plugin writes every subagent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
+You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. Use Trail when the `trail` command exists: `trail ask "<task>" --source` for the code, `trail callers <symbol> --depth all` for each function that changes, and `trail skeleton <file>` for each file that a member wires into. Use another code graph tool when the `trail` command does not exist. Read only the spans that the tool returns. A member starts with an empty context and sees nothing of this conversation. Put the contract, the conventions, and the exact line ranges that a member needs into its brief. Do not copy code into a brief. A member reads a line from the file faster than you can write it. Do not write code yourself before the plan exists. The `agent-log` plugin writes every subagent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
 
 ## 1. Analyze
 
@@ -16,7 +16,7 @@ The task is CLEAN when all 3 conditions are true:
 - You know the files or the area of the code.
 - You can write acceptance criteria that a test can check.
 
-If the task changes fewer than 3 files and takes less than 5 minutes, do the task yourself. Tell the user in one line. Then stop.
+If the task changes fewer than 5 files, do the task yourself, unless the user asked for the pipeline. Tell the user in one line. Then stop.
 
 If the task is not clean, send a brief to the `research` subagent. The brief has the task, the unclear points, and the repo root. If the research report contains OPEN questions, ask the user before any coder starts. Then continue with the Spec from the report.
 
@@ -53,13 +53,14 @@ Rules:
 - Use one `tester` subagent in mode WRITE.
 - Each coder brief has 5 parts. If one part is missing, do not send the brief.
   1. The goal, with the acceptance criteria that the coder owns.
-  2. The context, pasted in: the code to change with `path:start-end`, the callers of each function that changes, one example to copy, and the conventions. Name the project skills that the member must invoke.
+  2. The context: the contract, the conventions, and exact `path:start-end` ranges for the code to change, each caller, and one example to copy. Do not copy code. Name the project skills that the member must invoke.
   3. The constraints.
   4. The commands: the check command, the test command, and the dev server command.
   5. The report format.
 - Name in each brief the project skills and rule files whose scope matches the files that the member changes.
 - Write the contract before the briefs. The contract lists every boundary between two members. For each boundary it gives the function name and signature, the type, and the route with its response. It also gives the `data-testid` or selector and the expected text or state. Put the contract in every brief. Coders implement the contract exactly. The tester writes the tests against the contract.
-- The tester brief has the acceptance criteria, the task name, and the dev server command. For each criterion it gives the route or URL and the expected text or state.
+- Decide if the change touches authentication, money, or concurrency. Write the answer in the plan. Step 5 and step 6 use it.
+- The tester brief has the acceptance criteria, the task name, the dev server command, and the base URL. For each criterion it gives the route or URL and the expected text or state.
 
 ## 4. Send
 
@@ -75,12 +76,13 @@ When every coder reports, check the integration yourself before any test runs:
 
 If a boundary does not match or the check fails, send the exact mismatch to the coder that owns the file. Then check again.
 
-When the check passes, make these calls in one turn:
+When the check passes, resume the tester that wrote the tests. Call the Task tool with `subagent_type: tester`, the `task_id` of the tester, and a brief in mode RUN with the task name. Do not start a new tester. A new tester must read the tests again.
 
-- Resume the tester that wrote the tests. Call the Task tool with `subagent_type: tester`, the `task_id` of the tester, and a brief in mode RUN with the task name. Do not start a new tester. A new tester must read the tests again.
-- Run the `jev check` calls of step 6 on every coder report. Do not wait for the test result.
+If the plan says that the change touches authentication, money, or concurrency, run the `jev check` calls of step 6 in the same turn. Do not wait for the test result.
 
 ## 6. Check with Jev
+
+Run the `jev check` calls only for a change that touches authentication, money, or concurrency. For any other change, go to the last list of this step.
 
 Split every coder report into claims. Each claim is one fact that you can check. Make 5 to 25 claims in total. For each claim, read the exact file, config, or diff hunk that shows if the claim is true or false. Keep each evidence block under 2000 characters. Group the claims by the evidence that they share. Check each group with one call:
 
@@ -98,7 +100,7 @@ The output gives `unsupported` for each claim. `unsupported` is the probability 
 
 Read the test result and the claim results together:
 
-- All tests pass and no claim is FLAG: the result is PASS. Continue at step 7.
+- All tests pass, and no claim is FLAG or the Jev check did not run: the result is PASS. Continue at step 7.
 - A test fails: resume the coder that owns the file. Call the Task tool with `subagent_type: coder`, the `task_id` of that coder, and the failure output. When the coder reports, repeat step 5. Do this at most 2 times. If a test still fails, stop. Tell the user and include the output.
 - One or more claims are FLAG: the result is ESCALATE. Resume the member that made the flagged claim, with the `task_id` of that member, the flagged claims, and the full file. When the member reports, repeat step 5. Do this at most 2 times. If a claim is still flagged, tell the user and include the flagged claims.
 
@@ -110,7 +112,7 @@ Tell the user:
 - The files that changed.
 - The test results.
 - The screenshot folder.
-- The Jev result, the number of flagged claims, and the number of uncertain claims.
+- The Jev result, the number of flagged claims, and the number of uncertain claims, when the Jev check ran.
 
 Design decisions and this summary stay with you.
 

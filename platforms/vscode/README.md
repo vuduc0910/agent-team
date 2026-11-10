@@ -19,7 +19,7 @@ Then, in VS Code with GitHub Copilot, once per project:
 5. Pick a Claude Opus model for the Leader in the model picker. A subagent whose configured model exceeds the main model's cost tier does not run.
 6. Have `jev` on PATH (from the `jev-opus-kit` plugin), `python3`, and `node` with npm in the project.
 
-Use: type `/delegate <task>` in chat, or give a task. The instructions file tells the Leader to run the `delegate` skill for any task that changes 3 or more files.
+Use: type `/delegate <task>` in chat, or give a task. The instructions file tells the Leader to run the `delegate` skill for any task that changes 5 or more files.
 
 Read the log:
 
@@ -61,7 +61,7 @@ Row kinds:
 | Member tool lists | Tool set names `read`, `search`, `edit`, `execute`, `web`, tool `execute/runInTerminal` | https://code.visualstudio.com/docs/agents/reference/tools-reference |
 | Opus-class and Sonnet-class models | `model` as a prioritized list. VS Code tries the models in order: `['Claude Opus 5.5', 'Claude Opus 5', 'Claude Opus 4.8']` and `['Claude Sonnet 5.5', 'Claude Sonnet 5', 'Claude Sonnet 4.6']`. The names are the names listed for Visual Studio Code | https://code.visualstudio.com/docs/copilot/customization/custom-agents and https://docs.github.com/en/copilot/reference/ai-models/supported-models |
 | One level of delegation | Local subagents cannot invoke further subagents by default (`chat.subagents.allowInvocationsFromSubagents` stays `false`) | https://code.visualstudio.com/docs/agents/subagents |
-| 5 Run tests and check with Jev in the same turn | Two `agent/runSubagent` calls in one turn: `tester` in mode RUN and `verifier`. Each Local invocation is stateless, so the RUN tester is a new subagent with an empty context | https://code.visualstudio.com/docs/agents/subagents |
+| 5 Run tests, and check with Jev for a change to authentication, money, or concurrency | One `agent/runSubagent` call for `tester` in mode RUN. For such a change, a second call for `verifier` in the same turn. Each Local invocation is stateless, so the RUN tester is a new subagent with an empty context | https://code.visualstudio.com/docs/agents/subagents |
 | 6 Check with Jev, fix rounds, ESCALATE rounds | Custom agent `.github/agents/verifier.agent.md` runs `jev check`. A fix round or an ESCALATE round is a new `agent/runSubagent` call for the agent that owns the file or the claim. The main agent cannot send follow-up messages to the same subagent. The new brief carries the failure output or the flagged claims, and the full context again | https://code.visualstudio.com/docs/copilot/customization/custom-agents and https://code.visualstudio.com/docs/agents/subagents |
 | 7 Log every subagent call | `.github/hooks/agent-team.json`. Event `PreToolUse` (`tool_name`, `tool_input`, `tool_use_id`) writes the `start` row. Event `PostToolUse` (`tool_name`, `tool_input`, `tool_use_id`, `tool_response`) writes the `end` row. Event `SubagentStop` (`agent_id`, `agent_type`) writes one row. The stdin JSON has `session_id`, `hook_event_name`, `cwd` on every event | https://code.visualstudio.com/docs/agents/reference/hooks-reference |
 | 7 Log the Leader's final message | Event `Stop`. The payload has `transcript_path`. The script reads `last_assistant_message` when a harness supplies it | https://code.visualstudio.com/docs/agents/reference/hooks-reference and https://docs.github.com/en/copilot/reference/hooks-reference |
@@ -71,10 +71,10 @@ Row kinds:
 
 Multi-agent work is slower than one agent on a small task. Every member starts with an empty context, and every hand-off is one more model round. The pipeline limits the cost in five ways:
 
-- Effort per role: the canonical plugin sets research `high`, coder `high`, tester `high`. VS Code has no effort field in `.agent.md`, so `model` is the only per-role knob. Research and coder run on Claude Opus. The tester runs on Claude Sonnet. See Gaps.
+- Effort per role: the canonical plugin sets research `high`, coder `medium`, tester `high`. VS Code has no effort field in `.agent.md`, so `model` is the only per-role knob. Research and coder run on Claude Opus. The tester runs on Claude Sonnet. See Gaps.
 - `jev rank` runs only when there are more than 5 sub-tasks. Fewer sub-tasks all go in the first round.
 - The tester RUN and a fix round are new `agent/runSubagent` calls, because a Local subagent is stateless. The RUN brief carries only the task name. The tester does not read the tests before it runs them.
-- The verifier runs in the same turn as the test run, not after it.
+- The verifier runs only for a change that touches authentication, money, or concurrency, and then in the same turn as the test run.
 - A coder brief carries `path:start-end` line ranges and one example to copy, so the coder does not search the repo.
 
 Measure before you tune. The `durations` view joins each `end` row to its `start` row by `tool_use_id` and gives seconds per subagent call:

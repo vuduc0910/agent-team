@@ -1,13 +1,13 @@
 ---
 name: delegate
-description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyze the task. Send a task that is not clean to research. Rank the sub-tasks with jev rank when there are more than 5. Write a plan. Send up to 5 coders in parallel with a Playwright tester. Run the tests with screenshots and check every claim with Jev in the same message. Report. Use this skill at the start of a task that changes 3 or more files, or that has a build step and a test step. Invoke as /agent-team:delegate <task>.
+description: Run the Leader pipeline on a task. The pipeline has 7 steps. Analyze the task. Send a task that is not clean to research. Rank the sub-tasks with jev rank when there are more than 5. Write a plan. Send up to 5 coders in parallel with a Playwright tester. Run the tests with screenshots. Check every claim with Jev when the change touches authentication, money, or concurrency. Report. Use this skill at the start of a task that changes 5 or more files. Invoke as /agent-team:delegate <task>.
 ---
 
 # Delegate
 
 Task: `$ARGUMENTS`. If there are no arguments, use the last task that the user gave in this conversation.
 
-You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. Use the first tool that exists on the machine. With Trail: run `trail ask "<task>" --source` for the code, `trail callers <symbol> --depth all` for each function that changes, and `trail skeleton <file>` for each file that a member wires into. Paste the spans that Trail returns. With codegraph: call `codegraph_context` with the task, then `codegraph_callers` for each function that changes. Without both, read the files and find the callers with Grep. A member starts with an empty context and sees nothing of this conversation. Put the context that a member needs into its brief. Do not write code yourself before the plan exists. Hooks write every Agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
+You are the Leader. You hold the context. Before you write the plan, read the files that the task changes and every caller of each function that changes. Use the first tool that exists on the machine. With Trail: run `trail ask "<task>" --source` for the code, `trail callers <symbol> --depth all` for each function that changes, and `trail skeleton <file>` for each file that a member wires into. Note the `path:start-end` of each span that Trail returns. With codegraph: call `codegraph_context` with the task, then `codegraph_callers` for each function that changes. Without both, read the files and find the callers with Grep. A member starts with an empty context and sees nothing of this conversation. Put the contract, the conventions, and the exact line ranges that a member needs into its brief. Do not copy code into a brief. A member reads a line from the file faster than you can write it. Do not write code yourself before the plan exists. Hooks write every Agent call and your final message of each turn to `.team/agent-log.sqlite`. You do nothing for the log.
 
 ## 1. Analyze
 
@@ -19,7 +19,7 @@ The task is CLEAN when all 3 conditions are true:
 - You know the files or the area of the code.
 - You can write acceptance criteria that a test can check.
 
-If the task changes fewer than 3 files and takes less than 5 minutes, do the task yourself. Tell the user in one line. Then stop.
+If the task changes fewer than 5 files, do the task yourself, unless the user asked for the pipeline. Tell the user in one line. Then stop.
 
 If the task is not clean, send a brief to `agent-team:research`. The brief has the task, the unclear points, and the repo root. If the research report contains OPEN questions, ask the user before any coder starts. Then continue with the Spec from the report.
 
@@ -56,13 +56,14 @@ Rules:
 - Use one `agent-team:tester` in mode WRITE.
 - Each coder brief has 5 parts. If one part is missing, do not send the brief.
   1. The goal, with the acceptance criteria that the coder owns.
-  2. The context, pasted in: the code to change with `path:start-end`, the callers of each function that changes, one example to copy, and the conventions. Name the project skills that the member must invoke.
+  2. The context: the contract, the conventions, and exact `path:start-end` ranges for the code to change, each caller, and one example to copy. Do not copy code. Name the project skills that the member must invoke.
   3. The constraints.
   4. The commands: the check command, the test command, and the dev server command.
   5. The report format.
 - Members get the CLAUDE.md files and the `.claude/rules/` files from Claude Code. Do not paste them. Read the skill list. Name in each brief the project skills whose description matches the files or the framework that the member changes.
 - Write the contract before the briefs. The contract lists every boundary between two members. For each boundary it gives the function name and signature, the type, and the route with its response. It also gives the `data-testid` or selector and the expected text or state. Put the contract in every brief. Coders implement the contract exactly. The tester writes the tests against the contract.
-- The tester brief has the acceptance criteria, the task name, and the dev server command. For each criterion it gives the route or URL and the expected text or state.
+- Decide if the change touches authentication, money, or concurrency. Write the answer in the plan. Step 5 and step 6 use it.
+- The tester brief has the acceptance criteria, the task name, the dev server command, and the base URL. For each criterion it gives the route or URL and the expected text or state.
 
 ## 4. Send
 
@@ -78,16 +79,15 @@ When every coder reports, check the integration yourself before any test runs:
 
 If a boundary does not match or the check fails, resume the coder that owns the file with SendMessage. The message is the exact mismatch. Then check again.
 
-When the check passes, make these two calls in one message:
+When the check passes, resume the tester that wrote the tests with SendMessage. The message is a brief in mode RUN with the task name. Do not start a new tester. A new tester must read the tests again.
 
-- Resume the tester that wrote the tests with SendMessage. The message is a brief in mode RUN with the task name. Do not start a new tester. A new tester must read the tests again.
-- Send `jev-opus-kit:jev-verifier` a brief with every coder report and the acceptance criteria. Do not wait for the test result.
+If the plan says that the change touches authentication, money, or concurrency, make a second call in the same message. Send `jev-opus-kit:jev-verifier` a brief with every coder report and the acceptance criteria. Do not wait for the test result.
 
 ## 6. Check with Jev
 
-The verifier splits the reports into claims and scores each claim with `jev check`. Read the test result and the verifier result together:
+The verifier runs only for a change that touches authentication, money, or concurrency. It splits the reports into claims and scores each claim with `jev check`. Read the test result. When the verifier ran, read its result too.
 
-- All tests pass and the result is `PASS`: continue at step 7.
+- All tests pass, and the verifier result is `PASS` or the verifier did not run: continue at step 7.
 - A test fails: resume the coder that owns the file with SendMessage. The message is the failure output. When the coder reports, repeat step 5. Do this at most 2 times. If a test still fails, stop. Tell the user and include the output.
 - The result is `ESCALATE`: resume the member that made the flagged claim with SendMessage. The message is the flagged claims and the full file. When the member reports, repeat step 5. Do this at most 2 times. If a claim is still flagged, tell the user and include the flagged claims.
 
@@ -99,7 +99,7 @@ Tell the user:
 - The files that changed.
 - The test results.
 - The screenshot folder.
-- The Jev result and the number of flagged claims.
+- The Jev result and the number of flagged claims, when the verifier ran.
 - The member tokens for this turn, from the query below. The hook adds the Leader tokens after this message.
 
 Design decisions and this summary stay with you.
